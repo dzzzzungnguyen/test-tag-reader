@@ -1,0 +1,15 @@
+# Local build artifacts (AprilTag install prefix from build-vendor-apriltag.sh)
+.local/
+
+# Vendor CMake build tree
+vendor/apriltag/build/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editor / OS
+.DS_Store
+Thumbs.db

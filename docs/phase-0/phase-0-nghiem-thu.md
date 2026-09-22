@@ -122,8 +122,8 @@ Ghi rõ để tránh nhầm “đã xong hệ thống AprilTag”:
 
 | Hạng mục | Trạng thái |
 |----------|------------|
-| Dual-viewport remap (yaw 90° / 270°) | Chưa |
-| `pupil-apriltags` / `tagStandard41h12` | Chưa |
+| Dual-viewport remap (yaw 90° / 270°) | Code: `src/tag_reader/rectify.py` — chờ bench Ubuntu |
+| `vendor/apriltag` / `tagStandard41h12` | Code: `src/tag_reader/detector.py` — chờ bench Ubuntu |
 | Debounce 6s + lookup JSON ID→text | Chưa |
 | Module đa luồng ingestion app | Chưa |
 | Đo latency loopback / tối ưu bỏ loopback + VA-API H.264 | Chưa (todo Giai đoạn 1 còn lại) |
@@ -145,7 +145,7 @@ Ghi rõ để tránh nhầm “đã xong hệ thống AprilTag”:
 
 Theo [`plan.md`](../plan.md) §5:
 
-1. **Phase 1 — Bench:** latency loopback; tag A3 mẫu + thử remap/detect → `docs/phase-1/`.  
+1. **Phase 1 — Bench:** xem [`../phase-1/README.md`](../phase-1/README.md) (tài liệu đã chốt; script/bench chưa chạy).  
 2. **Phase 2:** code pipeline đọc `/dev/video1` → dual remap → AprilTag → debounce + JSON → console/log.
 
 ---

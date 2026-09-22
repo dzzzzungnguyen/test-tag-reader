@@ -16,7 +16,7 @@ Tài liệu này tổng hợp bối cảnh vận hành, các thông số ràng b
 | **Chuẩn Tag**       | `tagStandard41h12`                                            | Lưới $9 \times 9$, sửa lỗi Hamming 12, tối đa 2.115 IDs.                                |
 | **Camera**          | **Ricoh Theta X** (bắt buộc)                                  | Live stream UVC H.264 4K ($3840 \times 1920$) @ $\approx 30$ fps. Rolling shutter.      |
 | **Phần cứng xử lý** | Laptop Intel Core Ultra 7 165U, 16GB RAM                      | Không GPU rời. Khai thác iGPU qua Intel VA-API / QSV và CPU đa nhân.                    |
-| **Hệ điều hành**    | Ubuntu Linux                                                  | libuvc-theta + GStreamer + V4L2 loopback + Python/C++ (`pupil-apriltags`).              |
+| **Hệ điều hành**    | Ubuntu Linux                                                  | libuvc-theta + GStreamer + V4L2 loopback + Python (`vendor/apriltag`).                  |
 
 ---
 
@@ -54,7 +54,7 @@ Theta X **không** expose `/dev/videoX` capture thật — kernel chỉ thấy `
        • remap 2 view: yaw 90° / 270°, FOV ≈ 70° → 1280×720
               │
               ▼
-    [Thread 3: AprilTag] pupil-apriltags tagStandard41h12
+    [Thread 3: AprilTag] vendor/apriltag tagStandard41h12
               │
               ▼
     [Thread 4: Debounce 6s + lookup ID→text]
@@ -110,10 +110,11 @@ gst-launch-1.0 v4l2src device=/dev/video1 ! videoconvert ! autovideosink sync=fa
 - Chỉ chiếu Gnomonic cho hai góc: yaw $= 90^\circ$ và $270^\circ$, pitch $= 0^\circ$, FOV $\approx 70^\circ$.
 - Precompute `(map_x, map_y)` $1280\times720$; runtime chỉ `cv::remap` ($< 3\text{ms}$/frame).
 
-#### Khâu 3: Nhận diện (`pupil-apriltags`)
+#### Khâu 3: Nhận diện (`vendor/apriltag`)
 
+- Dùng thư viện AprilTag 3 trong [`vendor/apriltag`](../vendor/apriltag) (không viết lại detector; không `pupil-apriltags`).
 - Quét $10$–$12$ FPS tổng (mỗi vách $5$–$6$ FPS). Tag hiện $1.5$–$2.0\text{s}$ → khoảng $8$–$12$ cơ hội đọc.
-- `quad_decimate=1.0`, `refine_edges=1`.
+- `quad_decimate=1.0`, `refine_edges=1`, `nthreads` ≥ 2.
 
 #### Khâu 4: Hậu xử lý
 
@@ -127,13 +128,12 @@ gst-launch-1.0 v4l2src device=/dev/video1 ! videoconvert ! autovideosink sync=fa
 0. **Phase 0 — Bridge camera → V4L2:** ✅ hoàn thành.  
    Nghiệm thu: [`phase-0/phase-0-nghiem-thu.md`](./phase-0/phase-0-nghiem-thu.md). Script: `scripts/setup-node-camera-theta/`.
 
-1. **Phase 1 — Bench kỹ thuật (Ubuntu, trước khi module hoá):** ⏳ chưa làm.  
-   Mục tiêu: chứng minh *trên máy thật* rằng từ `/dev/video1` có thể nắn viewport + đọc AprilTag ổn ở khoảng cách ~6 m; đo latency loopback.  
-   - Đo latency loopback; nếu cao quá cho AprilTag → cân nhắc bỏ loopback, đọc GStreamer trực tiếp.  
-   - In / dán tag A3 mẫu `tagStandard41h12`, đặt ~6 m, thử `remap` (yaw 90°/270°) + detect.  
-   - Ghi nhận FPS hữu dụng, tỷ lệ detect, blur/phơi sáng thô (shutter vẫn chỉnh tay trên camera).  
-   - *(Phần camera live `/dev/video1` đã xong ở Phase 0 — không lặp lại.)*
-   - Deliverable: ghi chú bench / nghiệm thu trong `docs/phase-1/` (chưa có). **Chưa** yêu cầu pipeline đa luồng production.
+1. **Phase 1 — Bench kỹ thuật (Ubuntu, trước khi module hoá production):** ⏳ doc + code bench đã có; chờ chạy trên máy Ubuntu.  
+   Chi tiết: [`phase-1/README.md`](./phase-1/README.md) · checklist [`phase-1/checklist-bench.md`](./phase-1/checklist-bench.md) · nghiệm thu [`phase-1/phase-1-nghiem-thu.md`](./phase-1/phase-1-nghiem-thu.md).  
+   **Đã chốt:** phòng ~6 m; tag A3 `41h12`; Python + OpenCV + **`vendor/apriltag`**; module `src/tag_reader/`; pass = detect **tĩnh**; log **ms** + ID/debug.  
+   - Build: `scripts/build-vendor-apriltag.sh` · Bench: `scripts/phase-1-bench/run_bench.py`.  
+   - *(Camera live `/dev/video1` đã xong ở Phase 0.)*  
+   - **Chưa** debounce / lookup JSON / pipeline đa luồng production (Phase 2).
 
 2. **Phase 2 — Module coding:**  
    Ingestion (`/dev/video1`), rectification, detection, debounce/lookup → console/log.

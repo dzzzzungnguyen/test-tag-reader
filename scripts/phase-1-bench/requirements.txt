@@ -1,0 +1,4 @@
+# Phase 1 bench runtime deps (Ubuntu).
+# AprilTag itself comes from vendor/ via scripts/build-vendor-apriltag.sh — not pip.
+opencv-python-headless>=4.8
+numpy>=1.24
