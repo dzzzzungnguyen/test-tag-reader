@@ -1,7 +1,7 @@
 # Nghiệm thu Phase 0 — Bridge Ricoh Theta X → V4L2
 
 **Trạng thái:** ✅ Đạt (đã triển khai & xác nhận live trên máy Ubuntu `livo-monitor`)  
-**Phạm vi:** Chỉ Khâu 0 trong [`plan.md`](./plan.md) — đưa luồng LIVE của Theta X thành node capture V4L2 để app đọc được.  
+**Phạm vi:** Chỉ Khâu 0 trong [`plan.md`](../plan.md) — đưa luồng LIVE của Theta X thành node capture V4L2 để app đọc được.  
 **Không thuộc Phase 0:** remap dual-viewport, AprilTag, debounce, lookup JSON, cấu hình shutter/ISO, đo latency tối ưu.
 
 ---
@@ -38,7 +38,7 @@ Phase 0 giải quyết đúng một việc:
 
 ## 3. Artifact trong repo
 
-Thư mục: [`scripts/setup-node-camera-theta/`](../scripts/setup-node-camera-theta/)
+Thư mục: [`scripts/setup-node-camera-theta/`](../../scripts/setup-node-camera-theta/)
 
 | File | Vai trò đã triển khai |
 |------|------------------------|
@@ -143,10 +143,10 @@ Ghi rõ để tránh nhầm “đã xong hệ thống AprilTag”:
 
 ## 9. Bước tiếp theo (sau Phase 0)
 
-Theo [`plan.md`](./plan.md) §5:
+Theo [`plan.md`](../plan.md) §5:
 
-1. **Bench còn lại:** latency; tag A3 mẫu + thử remap/detect.  
-2. **Giai đoạn 2:** code pipeline đọc `/dev/video1` → dual remap → AprilTag → debounce + JSON → console/log.
+1. **Phase 1 — Bench:** latency loopback; tag A3 mẫu + thử remap/detect → `docs/phase-1/`.  
+2. **Phase 2:** code pipeline đọc `/dev/video1` → dual remap → AprilTag → debounce + JSON → console/log.
 
 ---
 
@@ -154,5 +154,5 @@ Theo [`plan.md`](./plan.md) §5:
 
 | Tài liệu | Nội dung |
 |----------|----------|
-| [`plan.md`](./plan.md) | Kế hoạch kỹ thuật đầy đủ; Khâu 0–4 |
-| [`scripts/setup-node-camera-theta/README.md`](../scripts/setup-node-camera-theta/README.md) | Chi tiết cài đặt & troubleshooting vận hành |
+| [`plan.md`](../plan.md) | Kế hoạch kỹ thuật đầy đủ; Khâu 0–4 |
+| [`scripts/setup-node-camera-theta/README.md`](../../scripts/setup-node-camera-theta/README.md) | Chi tiết cài đặt & troubleshooting vận hành |

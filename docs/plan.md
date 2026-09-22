@@ -125,17 +125,20 @@ gst-launch-1.0 v4l2src device=/dev/video1 ! videoconvert ! autovideosink sync=fa
 ### 5. Kế hoạch Triển khai (Next Steps)
 
 0. **Phase 0 — Bridge camera → V4L2:** ✅ hoàn thành.  
-   Nghiệm thu: [`phase-0-nghiem-thu.md`](./phase-0-nghiem-thu.md). Script: `scripts/setup-node-camera-theta/`.
+   Nghiệm thu: [`phase-0/phase-0-nghiem-thu.md`](./phase-0/phase-0-nghiem-thu.md). Script: `scripts/setup-node-camera-theta/`.
 
-1. **Giai đoạn 1 (Bench còn lại — Ubuntu):**  
+1. **Phase 1 — Bench kỹ thuật (Ubuntu, trước khi module hoá):** ⏳ chưa làm.  
+   Mục tiêu: chứng minh *trên máy thật* rằng từ `/dev/video1` có thể nắn viewport + đọc AprilTag ổn ở khoảng cách ~6 m; đo latency loopback.  
    - Đo latency loopback; nếu cao quá cho AprilTag → cân nhắc bỏ loopback, đọc GStreamer trực tiếp.  
-   - Tag A3 mẫu, khoảng 6 m, test `remap` + detect.  
-   - *(Đã xong trong Phase 0: install script, `/dev/video1` có hình live.)*
+   - In / dán tag A3 mẫu `tagStandard41h12`, đặt ~6 m, thử `remap` (yaw 90°/270°) + detect.  
+   - Ghi nhận FPS hữu dụng, tỷ lệ detect, blur/phơi sáng thô (shutter vẫn chỉnh tay trên camera).  
+   - *(Phần camera live `/dev/video1` đã xong ở Phase 0 — không lặp lại.)*
+   - Deliverable: ghi chú bench / nghiệm thu trong `docs/phase-1/` (chưa có). **Chưa** yêu cầu pipeline đa luồng production.
 
-2. **Giai đoạn 2 (Module coding):**  
-   Ingestion (`/dev/video1`), rectification, detection, debounce/lookup.
+2. **Phase 2 — Module coding:**  
+   Ingestion (`/dev/video1`), rectification, detection, debounce/lookup → console/log.
 
-3. **Giai đoạn 3 (Field test hầm):**  
+3. **Phase 3 — Field test hầm:**  
    $15$–$25\text{ km/h}$, tinh chỉnh shutter / ISO trên thân máy hoặc app Theta.
 
 ---
