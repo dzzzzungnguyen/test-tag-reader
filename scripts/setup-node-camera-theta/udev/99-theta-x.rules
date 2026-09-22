@@ -1,0 +1,7 @@
+# Ricoh Theta X — live streaming USB (idProduct 0x2717)
+# Khi camera vào LIVE, systemd kéo service đổ luồng vào v4l2loopback.
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="05ca", ATTR{idProduct}=="2717", TAG+="systemd", ENV{SYSTEMD_WANTS}="theta-loopback.service"
+
+# Gỡ service khi rút USB / thoát LIVE
+ACTION=="remove", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="05ca", ENV{ID_MODEL_ID}=="2717", TAG+="systemd", ENV{SYSTEMD_WANTS}=""
+ACTION=="remove", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="05ca", ENV{ID_MODEL_ID}=="2717", RUN+="/bin/systemctl --no-block stop theta-loopback.service"
