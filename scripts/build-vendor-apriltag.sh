@@ -15,7 +15,12 @@ if [[ "$(uname -s)" != "Linux" ]]; then
 fi
 
 if [[ ! -f "${SRC}/CMakeLists.txt" ]]; then
-  echo "ERROR: không thấy ${SRC}/CMakeLists.txt" >&2
+  if [[ -f "${REPO_ROOT}/.gitmodules" ]] && git -C "${REPO_ROOT}" config -f .gitmodules --get submodule.vendor/apriltag.url >/dev/null 2>&1; then
+    echo "ERROR: AprilTag submodule chưa được checkout: ${SRC}" >&2
+    echo "Chạy: git -C ${REPO_ROOT} submodule update --init --recursive" >&2
+  else
+    echo "ERROR: thiếu ${SRC}/CMakeLists.txt và cấu hình Git submodule." >&2
+  fi
   exit 1
 fi
 
