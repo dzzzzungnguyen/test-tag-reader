@@ -45,9 +45,9 @@ Theta X **không** expose `/dev/videoX` capture thật — kernel chỉ thấy `
               │
               ▼
     [Thread 1: Ingestion]
-       • v4l2src device=/dev/video1  (hoặc đọc thẳng appsink sau decode)
-       • HW decode ưu tiên VA-API H.264 (vaapih264dec / vah264dec) — KHÔNG dùng vaapijpegdec
+       • v4l2src device=/dev/video1  (frame đã decode I420 trong gst_loopback)
        • queue max-size-buffers=1 leaky=downstream
+       • (Tùy chọn sau) bỏ loopback → decode VA-API H.264 trực tiếp; KHÔNG dùng vaapijpegdec
               │
               ▼ (throttle 10–12 FPS)
     [Thread 2: Dual-Viewport Rectification]
@@ -76,7 +76,7 @@ Theta X **không** expose `/dev/videoX` capture thật — kernel chỉ thấy `
 |------|----------|
 | 1 | Camera **LIVE** (`lsusb` → `05ca:2717`; nếu thấy `05ca:0373` thì vẫn đang camera/MTP mode) |
 | 2 | `v4l2loopback` tạo `/dev/video1` (`card_label=ThetaX`) |
-| 3 | `gst_loopback` (sample đã patch PID X + device 42) đẩy frame vào node đó |
+| 3 | `gst_loopback` (sample đã patch PID Theta X `0x2717` + `v4l2sink` → `/dev/video1`) đẩy frame I420 vào node đó |
 | 4 | App mở `/dev/video1` — **đây là “capture stream” dùng được**, không phải `/dev/media*` của Theta |
 
 Cài một lần trên Ubuntu:
@@ -99,9 +99,9 @@ gst-launch-1.0 v4l2src device=/dev/video1 ! videoconvert ! autovideosink sync=fa
 #### Khâu 1: Lấy luồng & Giải mã (Ingestion)
 
 - **Không** dùng `v4l2src` trực tiếp lên device USB của Theta (không có).
-- **Không** dùng `vaapijpegdec` — live stream là **H.264**, không phải MJPEG.
-- Đường chuẩn V4L2: `v4l2src device=/dev/video1 ! ...` (frame đã decode sẵn I420 từ `gst_loopback`).
-- Đường tối ưu latency (tùy chọn sau): `thetauvcsrc` / pipeline GStreamer bỏ loopback; decode VA-API `vaapih264dec`/`vah264dec` trên iGPU Ultra 7.
+- **Không** dùng `vaapijpegdec` — live USB là **H.264**; sau Phase 0 app nhận **I420** từ loopback.
+- Đường chuẩn (hiện tại): `v4l2src device=/dev/video1 ! ...` — frame đã decode sẵn trong `gst_loopback`.
+- Đường tối ưu latency (tùy chọn sau): bỏ loopback; decode VA-API H.264 (`vaapih264dec`/`vah264dec`) trên iGPU Ultra 7.
 - `queue max-size-buffers=1 leaky=downstream` để luôn giữ frame mới nhất.
 
 #### Khâu 2: Nắn phối cảnh 2 mạn sườn (Dual-Viewport Rectification)
@@ -124,17 +124,19 @@ gst-launch-1.0 v4l2src device=/dev/video1 ! videoconvert ! autovideosink sync=fa
 
 ### 5. Kế hoạch Triển khai (Next Steps)
 
-1. **Giai đoạn 1 (Bench — Ubuntu):**  
-   - Copy `scripts/setup-node-camera-theta` sang máy Ubuntu → `sudo ./install.sh`.  
-   - Xác nhận `/dev/video1` có hình (`gst-launch` / VLC).  
+0. **Phase 0 — Bridge camera → V4L2:** ✅ hoàn thành.  
+   Nghiệm thu: [`phase-0-nghiem-thu.md`](./phase-0-nghiem-thu.md). Script: `scripts/setup-node-camera-theta/`.
+
+1. **Giai đoạn 1 (Bench còn lại — Ubuntu):**  
    - Đo latency loopback; nếu cao quá cho AprilTag → cân nhắc bỏ loopback, đọc GStreamer trực tiếp.  
-   - Tag A3 mẫu, khoảng 6 m, test `remap` + detect.
+   - Tag A3 mẫu, khoảng 6 m, test `remap` + detect.  
+   - *(Đã xong trong Phase 0: install script, `/dev/video1` có hình live.)*
 
 2. **Giai đoạn 2 (Module coding):**  
    Ingestion (`/dev/video1`), rectification, detection, debounce/lookup.
 
 3. **Giai đoạn 3 (Field test hầm):**  
-   $15$–$25\text{ km/h}$, tinh chỉnh shutter.
+   $15$–$25\text{ km/h}$, tinh chỉnh shutter / ISO trên thân máy hoặc app Theta.
 
 ---
 

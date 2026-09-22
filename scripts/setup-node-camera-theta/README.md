@@ -169,4 +169,5 @@ gst-launch-1.0 v4l2src device=/dev/video1 ! videoconvert ! autovideosink sync=fa
 
 ## Liên quan dự án
 
-[`plan.md`](../../plan.md) — Khâu 0 (bridge) + Khâu 1 (ingestion qua `/dev/video1`).
+- [`docs/plan.md`](../../docs/plan.md) — Khâu 0 (bridge) + Khâu 1 (ingestion qua `/dev/video1`).
+- [`docs/phase-0-nghiem-thu.md`](../../docs/phase-0-nghiem-thu.md) — nghiệm thu Phase 0 (đã triển khai gì, pass criteria).
