@@ -112,11 +112,17 @@ sudo ./install.sh
 
 `install.sh` sẽ:
 
-1. Cài gói build + GStreamer + `v4l2loopback-dkms`
-2. Clone / build 2 repo Ricoh vào `/opt/theta`
-3. Patch: PID `0x2717`, `v4l2sink` → `/dev/video${THETA_VIDEO_NR}`, `THETA_DAEMON`
-4. Nạp module loopback với `video_nr` cố định
-5. Cài udev + enable `theta-loopback.service`
+1. Gỡ gói Ubuntu `v4l2loopback-dkms` nếu còn, rồi `apt-mark hold` gói đó. Gói noble `0.12.7` không build trên kernel `>= 6.18` (máy này đang `7.0`). Hold có chủ đích. Gỡ hold chỉ khi `apt-cache policy v4l2loopback-dkms` ra một bản khác `0.12.7` và bản đó đã có vá kernel `>= 6.18`.
+2. Cài gói build, GStreamer, `dkms`, `v4l-utils`, và header của kernel đang boot (`linux-headers-$(uname -r)` cùng `linux-headers-generic-hwe-24.04`).
+3. Checkout [v4l2loopback](https://github.com/v4l2loopback/v4l2loopback) tag `v0.15.4` vào `/opt/theta/v4l2loopback`, rồi `dkms install` cho đúng kernel đang chạy. Không clone `master`. `v0.15.2` chỉ sửa biên dịch và vẫn oops lúc ioctl. `v0.15.4` gồm vá biên dịch lẫn accessor `file_to_v4l2_fh`.
+4. Nạp module, kiểm tra `/dev/video${THETA_VIDEO_NR}` và nhãn `ThetaX`. Thiếu thì script dừng.
+5. Clone / build 2 repo Ricoh vào `/opt/theta`
+6. Patch: PID `0x2717`, `v4l2sink` → `/dev/video${THETA_VIDEO_NR}`, `THETA_DAEMON`
+7. Cài udev + enable `theta-loopback.service`
+
+Log đầy đủ: `/var/log/theta-setup.log`. Khi DKMS fail, script in thêm 80 dòng cuối `/var/lib/dkms/v4l2loopback/*/build/make.log`.
+
+Kỳ vọng sau khi chạy: `dkms status` có `v4l2loopback/0.15.4` installed cho `uname -r`, và `v4l2-ctl --list-devices` có `ThetaX`.
 
 ---
 
@@ -164,6 +170,8 @@ gst-launch-1.0 v4l2src device=/dev/video1 ! videoconvert ! autovideosink sync=fa
 | Service thoát ngay | Thiếu `THETA_DAEMON`; `journalctl -u theta-loopback -e` |
 | Sai số video | `THETA_VIDEO_NR` ≠ node thật → sửa conf, patch lại, `modprobe` lại |
 | Không có format trên device | `gst_loopback` chưa chạy / chưa feed |
+| `install.sh` dừng / DKMS fail | `/var/log/theta-setup.log` và đuôi `make.log` trong `/var/lib/dkms/v4l2loopback/` |
+| `apt` kéo lại `v4l2loopback-dkms` 0.12.7 | Gói đang `hold`. Đừng `apt-mark unhold` khi candidate vẫn là 0.12.7 |
 
 ---
 
