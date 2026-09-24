@@ -122,7 +122,7 @@ sudo ./install.sh
 
 Log đầy đủ: `/var/log/theta-setup.log`. Khi DKMS fail, script in thêm 80 dòng cuối `/var/lib/dkms/v4l2loopback/*/build/make.log`.
 
-Kỳ vọng sau khi chạy: `dkms status` có `v4l2loopback/0.15.4` installed cho `uname -r`, và `v4l2-ctl --list-devices` có `ThetaX`.
+Kỳ vọng sau khi chạy: `dkms status` có `v4l2loopback/0.15.4` installed cho `uname -r`, và `v4l2-ctl -d /dev/video1 --info` có `Card type: ThetaX`. `v4l2-ctl --list-devices` không có `-d` sẽ mở `/dev/video0` trước. Node đó không mở được thì lệnh thoát với `Cannot open device /dev/video0`, dù loopback nằm ở `video1`.
 
 ---
 

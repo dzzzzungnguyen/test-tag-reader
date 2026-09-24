@@ -21,9 +21,13 @@ fi
 
 echo
 echo "=== V4L2 devices ==="
-v4l2-ctl --list-devices 2>/dev/null || echo "(v4l2-ctl thiếu)"
 echo "Target: ${VIDEO_DEV} label=${THETA_CARD_LABEL}"
-[[ -e "${VIDEO_DEV}" ]] && echo "EXISTS ${VIDEO_DEV}" || echo "MISSING ${VIDEO_DEV}"
+if [[ -e "${VIDEO_DEV}" ]]; then
+  echo "EXISTS ${VIDEO_DEV}"
+  v4l2-ctl -d "${VIDEO_DEV}" --info 2>&1 || true
+else
+  echo "MISSING ${VIDEO_DEV}"
+fi
 
 echo
 echo "=== gst_loopback binary ==="

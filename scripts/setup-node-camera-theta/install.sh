@@ -183,8 +183,11 @@ modprobe v4l2loopback exclusive_caps=1 \
 if [[ ! -e "/dev/video${THETA_VIDEO_NR}" ]]; then
   fail "/dev/video${THETA_VIDEO_NR} không xuất hiện sau modprobe"
 fi
-if ! v4l2-ctl --list-devices | grep -q "${THETA_CARD_LABEL}"; then
-  fail "v4l2-ctl không thấy ${THETA_CARD_LABEL}"
+# --list-devices mở /dev/video0 trước. Node đó không mở được thì v4l2-ctl thoát
+# cả lệnh, dù loopback nằm ở video1. Hỏi đúng device.
+v4l_info="$(v4l2-ctl -d "/dev/video${THETA_VIDEO_NR}" --info 2>&1)" || fail "v4l2-ctl không mở được /dev/video${THETA_VIDEO_NR}: ${v4l_info}"
+if ! grep -q "${THETA_CARD_LABEL}" <<<"${v4l_info}"; then
+  fail "v4l2-ctl không thấy ${THETA_CARD_LABEL} trên /dev/video${THETA_VIDEO_NR}: ${v4l_info}"
 fi
 
 echo "==> [5/7] Clone upstream vào ${THETA_PREFIX}"
