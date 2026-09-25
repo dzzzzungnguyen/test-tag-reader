@@ -26,7 +26,7 @@ Kế hoạch: [`README.md`](./README.md) · Nghiệm thu: [`phase-1-nghiem-thu.m
 - [ ] Ánh sáng phòng đủ nhìn rõ tag bằng mắt (ghi chú nếu tối)
 
 Khoảng cách đo thực tế: `________ m`  
-Bên tường / viewport dự kiến (`left`=yaw 270° / `right`=yaw 90°): `________`
+Bên tường / viewport dự kiến (`left`=yaw 180° / `right`=yaw 0°): `________`
 
 ---
 
@@ -80,7 +80,7 @@ python3 scripts/phase-1-bench/run_bench.py --no-preview --json-log | tee /tmp/ph
 ```
 
 - [ ] Script mở đúng `/dev/videoN`
-- [ ] Remap 1280×720, yaw 90° / 270°, FOV ≈ 70°
+- [ ] Remap 1280×720, yaw 0° / 180°, FOV ≈ 70°
 - [ ] Detector: `tagStandard41h12`, `decimate=1.0`, `refine_edges`, `nthreads` ≥ 2
 - [ ] Log có: `t_grab_ms`, `t_remap_ms`, `t_detect_ms`, `t_total_ms`, fps, ids (+ margin trong JSON/debug overlay)
 - [ ] Preview thấy equirect + viewport (trừ khi `--no-preview`)

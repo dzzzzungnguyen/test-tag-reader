@@ -87,15 +87,15 @@ def _build_gnomonic_maps(
 
 
 class DualViewportRectifier:
-    """Precompute left (yaw=270°) and right (yaw=90°) viewport maps."""
+    """Precompute left (yaw=180°, rear lens) and right (yaw=0°, front lens) viewport maps."""
 
     def __init__(
         self,
         src_size: Tuple[int, int] = (3840, 1920),
         out_size: Tuple[int, int] = (1280, 720),
         fov_deg: float = 70.0,
-        yaw_right_deg: float = 90.0,
-        yaw_left_deg: float = 270.0,
+        yaw_right_deg: float = 0.0,
+        yaw_left_deg: float = 180.0,
         pitch_deg: float = 0.0,
     ) -> None:
         src_w, src_h = src_size

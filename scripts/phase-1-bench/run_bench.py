@@ -36,8 +36,8 @@ def parse_args() -> argparse.Namespace:
         help="Which viewport(s) to remap+detect",
     )
     p.add_argument("--fov", type=float, default=70.0, help="Horizontal FOV degrees")
-    p.add_argument("--yaw-right", type=float, default=90.0)
-    p.add_argument("--yaw-left", type=float, default=270.0)
+    p.add_argument("--yaw-right", type=float, default=0.0, help="Front lens, right wall")
+    p.add_argument("--yaw-left", type=float, default=180.0, help="Rear lens, left wall")
     p.add_argument("--out-w", type=int, default=1280)
     p.add_argument("--out-h", type=int, default=720)
     p.add_argument("--decimate", type=float, default=1.0)

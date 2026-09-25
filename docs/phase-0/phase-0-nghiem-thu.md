@@ -122,7 +122,7 @@ Ghi rõ để tránh nhầm “đã xong hệ thống AprilTag”:
 
 | Hạng mục | Trạng thái |
 |----------|------------|
-| Dual-viewport remap (yaw 90° / 270°) | Code: `src/tag_reader/rectify.py` — chờ bench Ubuntu |
+| Dual-viewport remap (yaw 0° / 180°, tâm hai thấu kính) | Code: `src/tag_reader/rectify.py` — chờ bench Ubuntu |
 | `vendor/apriltag` / `tagStandard41h12` | Code: `src/tag_reader/detector.py` — chờ bench Ubuntu |
 | Debounce 6s + lookup JSON ID→text | Chưa |
 | Module đa luồng ingestion app | Chưa |

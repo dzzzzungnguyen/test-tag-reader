@@ -12,7 +12,7 @@
 
 Chứng minh trên Ubuntu + Theta X thật:
 
-1. Từ equirect `/dev/video1` có thể **remap** 2 viewport (yaw 90° / 270°) ra ảnh phối cảnh phẳng.
+1. Từ equirect `/dev/video1` có thể **remap** 2 viewport (yaw 0° / 180°, tâm hai thấu kính) ra ảnh phối cảnh phẳng.
 2. Trên viewport đó, **AprilTag `tagStandard41h12` khổ A3** đọc được ở khoảng **~6 m** (điều kiện **tĩnh**).
 3. Phần mềm **log thời gian xử lý** từng khâu (đọc frame / remap / detect) và FPS hữu dụng — đủ để đánh giá loopback có chấp nhận được cho Phase 2 hay không.
 
@@ -45,7 +45,7 @@ Chứng minh trên Ubuntu + Theta X thật:
 | Hạng mục | Chi tiết |
 |----------|----------|
 | Input | `/dev/video1` (hoặc `THETA_VIDEO_NR` nếu khác) |
-| Remap | Gnomonic; yaw **90°** (right) và **270°** (left); pitch **0°**; FOV ≈ **70°**; output **1280×720**; precompute `map_x/map_y` |
+| Remap | Gnomonic; yaw **0°** (right, kính trước) và **180°** (left, kính sau); pitch **0°**; FOV ≈ **70°**; output **1280×720**; precompute `map_x/map_y` |
 | Detector | Build từ **`vendor/apriltag`**; family **`tagStandard41h12`**; `quad_decimate=1.0`; `refine_edges=1` |
 | Logging | ms: grab / remap / detect / total; FPS; ID + debug fields |
 | Preview | Cửa sổ OpenCV (equirect thu nhỏ + viewport) |

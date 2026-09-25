@@ -51,7 +51,7 @@ Theta X **không** expose `/dev/videoX` capture thật — kernel chỉ thấy `
               │
               ▼ (throttle 10–12 FPS)
     [Thread 2: Dual-Viewport Rectification]
-       • remap 2 view: yaw 90° / 270°, FOV ≈ 70° → 1280×720
+       • remap 2 view: yaw 0° (kính trước) / 180° (kính sau), FOV ≈ 70° → 1280×720
               │
               ▼
     [Thread 3: AprilTag] vendor/apriltag tagStandard41h12
@@ -107,7 +107,7 @@ gst-launch-1.0 v4l2src device=/dev/video1 ! videoconvert ! autovideosink sync=fa
 #### Khâu 2: Nắn phối cảnh 2 mạn sườn (Dual-Viewport Rectification)
 
 - Tag cong trên equirectangular làm hỏng quad detection.
-- Chỉ chiếu Gnomonic cho hai góc: yaw $= 90^\circ$ và $270^\circ$, pitch $= 0^\circ$, FOV $\approx 70^\circ$.
+- Chỉ chiếu Gnomonic cho hai tâm thấu kính: yaw $= 0^\circ$ (kính trước, vách phải) và $180^\circ$ (kính sau, vách trái), pitch $= 0^\circ$, FOV $\approx 70^\circ$. Yaw $90^\circ$ / $270^\circ$ là mép ghép, không phải hướng lens.
 - Precompute `(map_x, map_y)` $1280\times720$; runtime chỉ `cv::remap` ($< 3\text{ms}$/frame).
 
 #### Khâu 3: Nhận diện (`vendor/apriltag`)
