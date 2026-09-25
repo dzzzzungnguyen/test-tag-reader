@@ -241,7 +241,7 @@ echo
 echo "OK. Log: ${LOG}"
 echo "  1) Bật LIVE trên Theta X, cắm USB"
 echo "  2) lsusb | grep -i ricoh   # kỳ vọng idProduct ${THETA_USB_PID_LIVE}"
-echo "  3) v4l2-ctl --list-devices # kỳ vọng ${THETA_CARD_LABEL} → /dev/video${THETA_VIDEO_NR}"
+echo "  3) v4l2-ctl -d /dev/video${THETA_VIDEO_NR} --info  # kỳ vọng Card type: ${THETA_CARD_LABEL}"
 echo "  4) dkms status             # kỳ vọng v4l2loopback/${V4L2LOOPBACK_VERSION} installed cho $(uname -r)"
 echo "  5) systemctl status theta-loopback"
 echo "  6) Manual: ${THETA_PREFIX}/bin/start-loopback.sh"

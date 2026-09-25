@@ -77,7 +77,8 @@ def _build_gnomonic_maps(
     z3 = -x2 * sy + z2 * cy
 
     lon = np.arctan2(x3, z3)
-    lat = np.arcsin(np.clip(y3, -1.0, 1.0))
+    # Camera y points down; equirect latitude is positive toward the top of the image.
+    lat = np.arcsin(np.clip(-y3, -1.0, 1.0))
 
     map_x = ((lon / (2.0 * np.pi)) + 0.5) * src_w
     map_y = (0.5 - (lat / np.pi)) * src_h
