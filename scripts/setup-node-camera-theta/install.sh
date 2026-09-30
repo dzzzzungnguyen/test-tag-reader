@@ -214,26 +214,8 @@ make -C "${LIBUVC_THETA_SAMPLE_DIR}/gst"
 ln -sfn gst_viewer "${LIBUVC_THETA_SAMPLE_DIR}/gst/gst_loopback"
 test -x "${GST_LOOPBACK_BIN}"
 
-echo "==> [7/7] Cài udev + systemd"
-install -m 0644 "${SCRIPT_DIR}/udev/99-theta-x.rules" /etc/udev/rules.d/99-theta-x.rules
-install -m 0644 "${SCRIPT_DIR}/systemd/theta-loopback.service" /etc/systemd/system/theta-loopback.service
-install -d /etc/systemd/system/theta-loopback.service.d
-install -d "${THETA_PREFIX}/bin"
-install -m 0755 "${SCRIPT_DIR}/start-loopback.sh" "${THETA_PREFIX}/bin/start-loopback.sh"
-install -m 0755 "${SCRIPT_DIR}/apply-patches.sh" "${THETA_PREFIX}/bin/apply-patches.sh"
-install -m 0644 "${SCRIPT_DIR}/theta.conf" "${THETA_PREFIX}/bin/theta.conf"
-cat > /etc/systemd/system/theta-loopback.service.d/override.conf <<EOF
-[Service]
-Environment=THETA_DAEMON=1
-Environment=LD_LIBRARY_PATH=/usr/local/lib
-EnvironmentFile=-${THETA_PREFIX}/bin/theta.conf
-ExecStart=
-ExecStart=${THETA_PREFIX}/bin/start-loopback.sh
-EOF
-
-udevadm control --reload-rules
-systemctl daemon-reload
-systemctl enable theta-loopback.service
+echo "==> [7/7] Cài udev + systemd (+ stream watchdog)"
+bash "${SCRIPT_DIR}/install-units.sh"
 
 chown -R "${REAL_USER}:${REAL_USER}" "${THETA_PREFIX}" 2>/dev/null || true
 
@@ -244,5 +226,7 @@ echo "  2) lsusb | grep -i ricoh   # kỳ vọng idProduct ${THETA_USB_PID_LIVE}
 echo "  3) v4l2-ctl -d /dev/video${THETA_VIDEO_NR} --info  # kỳ vọng Card type: ${THETA_CARD_LABEL}"
 echo "  4) dkms status             # kỳ vọng v4l2loopback/${V4L2LOOPBACK_VERSION} installed cho $(uname -r)"
 echo "  5) systemctl status theta-loopback"
-echo "  6) Manual: ${THETA_PREFIX}/bin/start-loopback.sh"
-echo "  7) Test:   gst-launch-1.0 v4l2src device=/dev/video${THETA_VIDEO_NR} ! videoconvert ! autovideosink sync=false"
+echo "  6) systemctl status theta-loopback-watchdog.timer"
+echo "  7) Manual: ${THETA_PREFIX}/bin/start-loopback.sh"
+echo "  8) Stream: ${THETA_PREFIX}/bin/check-stream.sh"
+echo "  9) Test:   gst-launch-1.0 v4l2src device=/dev/video${THETA_VIDEO_NR} ! videoconvert ! autovideosink sync=false"

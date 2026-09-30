@@ -153,3 +153,4 @@ gst-launch-1.0 v4l2src device=/dev/video1 ! videoconvert ! autovideosink sync=fa
 | Chỉ thấy `/dev/media1` cho Theta | Bình thường — không có capture V4L2 native |
 | Service start rồi thoát | Chưa patch `THETA_DAEMON` / keywait đọc EOF |
 | Decode lỗi | Thiếu `gstreamer1.0-libav` / plugins ugly; hoặc VA-API chưa `vainfo` OK |
+| `systemctl active` nhưng app `select() timeout` / không đọc frame | `gst_loopback` treo idle; node vẫn có format cũ. Dùng `check-stream.sh` + watchdog timer (`theta-loopback-watchdog.timer`) — không tin mỗi `active` |

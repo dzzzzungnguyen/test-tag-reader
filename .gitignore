@@ -1,6 +1,12 @@
 # Local build artifacts (AprilTag install prefix from build-vendor-apriltag.sh)
 .local/
 
+# Phase 1 bench logs (timestamped)
+logs/
+phase1-bench.log
+phase1-bench*.log
+phase1-bench*.jsonl
+
 # Vendor CMake build tree
 vendor/apriltag/build/
 

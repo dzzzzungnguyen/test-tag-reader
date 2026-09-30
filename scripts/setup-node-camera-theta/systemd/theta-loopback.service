@@ -3,15 +3,19 @@ Description=Ricoh Theta X live stream → v4l2loopback (/dev/video1)
 Documentation=https://github.com/ricohapi/libuvc-theta-sample
 After=systemd-udevd.service
 # Không BindsTo USB vì PID chỉ đúng khi đang LIVE; udev sẽ start/stop
+StartLimitIntervalSec=120
+StartLimitBurst=6
 
 [Service]
 Type=simple
 Environment=THETA_DAEMON=1
 Environment=LD_LIBRARY_PATH=/usr/local/lib
-# ExecStart được override.conf ghi đè tới /opt/theta/bin/start-loopback.sh
+# ExecStart / ExecStartPost được override.conf ghi đè tới /opt/theta/bin/
 ExecStart=/opt/theta/bin/start-loopback.sh
+# Fail nếu sau warmup vẫn không có frame → Restart=on-failure
+ExecStartPost=/opt/theta/bin/wait-stream-ready.sh
 Restart=on-failure
-RestartSec=3
+RestartSec=5
 # Tránh keywait đọc EOF làm quit (backup nếu chưa patch)
 StandardInput=null
 StandardOutput=journal

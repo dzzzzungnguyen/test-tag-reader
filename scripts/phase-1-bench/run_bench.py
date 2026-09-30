@@ -13,7 +13,9 @@ import argparse
 import json
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
+from typing import IO, TextIO
 
 import cv2
 import numpy as np
@@ -24,6 +26,26 @@ if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 from tag_reader import DualViewportRectifier, Stopwatch, TagDetector  # noqa: E402
+
+
+class _Tee:
+    """Write the same text to console + log file."""
+
+    def __init__(self, *streams: TextIO) -> None:
+        self.streams = streams
+
+    def write(self, data: str) -> int:
+        for s in self.streams:
+            s.write(data)
+            s.flush()
+        return len(data)
+
+    def flush(self) -> None:
+        for s in self.streams:
+            s.flush()
+
+    def isatty(self) -> bool:
+        return bool(self.streams and self.streams[0].isatty())
 
 
 def parse_args() -> argparse.Namespace:
@@ -56,7 +78,42 @@ def parse_args() -> argparse.Namespace:
         help="One JSON object per processed frame on stdout",
     )
     p.add_argument("--max-frames", type=int, default=0, help="Stop after N processed (0=forever)")
+    p.add_argument(
+        "--log-dir",
+        type=Path,
+        default=_REPO_ROOT / "logs",
+        help="Directory for timestamped log files (default: <repo>/logs)",
+    )
+    p.add_argument(
+        "--log-file",
+        type=Path,
+        default=None,
+        help="Explicit log path (skips auto timestamp name)",
+    )
+    p.add_argument(
+        "--no-log-file",
+        action="store_true",
+        help="Do not write a log file (console only)",
+    )
     return p.parse_args()
+
+
+def resolve_log_path(args: argparse.Namespace) -> Path | None:
+    if args.no_log_file:
+        return None
+    if args.log_file is not None:
+        return args.log_file.expanduser().resolve()
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    ext = "jsonl" if args.json_log else "log"
+    return (args.log_dir.expanduser().resolve() / f"phase1-bench-{stamp}.{ext}")
+
+
+def open_log_tee(log_path: Path) -> IO[str]:
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_fp = log_path.open("w", encoding="utf-8")
+    sys.stdout = _Tee(sys.__stdout__, log_fp)  # type: ignore[assignment]
+    sys.stderr = _Tee(sys.__stderr__, log_fp)  # type: ignore[assignment]
+    return log_fp
 
 
 def draw_detections(bgr: np.ndarray, detections) -> None:
@@ -80,7 +137,22 @@ def draw_detections(bgr: np.ndarray, detections) -> None:
 
 def main() -> int:
     args = parse_args()
+    log_path = resolve_log_path(args)
+    log_fp: IO[str] | None = None
+    if log_path is not None:
+        log_fp = open_log_tee(log_path)
+        print(f"log_file={log_path}", file=sys.stderr)
 
+    try:
+        return _run_bench(args)
+    finally:
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
+        if log_fp is not None:
+            log_fp.close()
+
+
+def _run_bench(args: argparse.Namespace) -> int:
     cap = cv2.VideoCapture(args.device, cv2.CAP_V4L2)
     if not cap.isOpened():
         print(f"ERROR: cannot open {args.device}", file=sys.stderr)
@@ -96,6 +168,21 @@ def main() -> int:
     ok, frame = cap.read()
     if not ok or frame is None:
         print("ERROR: failed to read first frame", file=sys.stderr)
+        print(
+            "  Loopback node mở được nhưng không có frame "
+            "(gst_loopback thường treo idle).",
+            file=sys.stderr,
+        )
+        print(
+            "  Thử: sudo systemctl restart theta-loopback "
+            "&& /opt/theta/bin/check-stream.sh",
+            file=sys.stderr,
+        )
+        print(
+            "  Hoặc đợi watchdog (~20s): "
+            "systemctl status theta-loopback-watchdog.timer",
+            file=sys.stderr,
+        )
         return 1
 
     src_h, src_w = frame.shape[:2]

@@ -1,0 +1,13 @@
+[Unit]
+Description=Run theta-loopback stream watchdog every 20s
+Documentation=file:///opt/theta/bin/watchdog-loopback.sh
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=20s
+AccuracySec=5s
+Persistent=false
+Unit=theta-loopback-watchdog.service
+
+[Install]
+WantedBy=timers.target

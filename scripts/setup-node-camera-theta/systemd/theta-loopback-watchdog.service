@@ -1,0 +1,9 @@
+[Unit]
+Description=Watchdog: restart theta-loopback if /dev/videoN has no frames
+Documentation=file:///opt/theta/bin/watchdog-loopback.sh
+After=theta-loopback.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/theta/bin/watchdog-loopback.sh
+Nice=10

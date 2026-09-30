@@ -9,7 +9,9 @@ Kế hoạch: [`README.md`](./README.md) · Nghiệm thu: [`phase-1-nghiem-thu.m
 
 - [ ] Theta X bật **LIVE** — `lsusb -d 05ca:2717` OK (không phải `0373`)
 - [ ] Service / loopback chạy — `systemctl status theta-loopback` hoặc `scripts/setup-node-camera-theta/status.sh`
-- [ ] Node đúng — `v4l2-ctl --list-devices` → `ThetaX` → `/dev/video1` (hoặc số đã conf)
+- [ ] **Frame thật** — `/opt/theta/bin/check-stream.sh` → `STREAM OK` (không đủ `systemctl active`)
+- [ ] Watchdog — `systemctl is-enabled theta-loopback-watchdog.timer` → enabled
+- [ ] Node đúng — `v4l2-ctl -d /dev/video1 --info` → `ThetaX` (hoặc số đã conf)
 - [ ] Có hình — `gst-launch-1.0 v4l2src device=/dev/video1 ! videoconvert ! autovideosink sync=false`
 - [ ] Format — `v4l2-ctl -d /dev/video1 --list-formats-ext` → YU12/I420 `3840x1920` @ ~30
 
@@ -66,15 +68,15 @@ cd /path/to/test-tag-reader
 source .local/apriltag-env.sh
 export PYTHONPATH="$(pwd)/src:${PYTHONPATH}"
 
-# Preview + log (cả hai viewport):
-python3 scripts/phase-1-bench/run_bench.py --device /dev/video1 --side both
+# Preview + log timestamped → logs/phase1-bench-YYYYMMDD-HHMMSS.log
+python3 -u scripts/phase-1-bench/run_bench.py --device /dev/video1 --side both
 
 # Chỉ một bên đang có tag:
-python3 scripts/phase-1-bench/run_bench.py --device /dev/video1 --side right
+python3 -u scripts/phase-1-bench/run_bench.py --device /dev/video1 --side right
 # hoặc --side left
 
-# Headless / SSH (không cửa sổ):
-python3 scripts/phase-1-bench/run_bench.py --no-preview --json-log | tee /tmp/phase1-bench.jsonl
+# Headless / SSH (không cửa sổ) → logs/phase1-bench-YYYYMMDD-HHMMSS.jsonl
+python3 -u scripts/phase-1-bench/run_bench.py --no-preview --json-log
 
 # Thoát preview: phím q hoặc Esc
 ```
@@ -83,6 +85,7 @@ python3 scripts/phase-1-bench/run_bench.py --no-preview --json-log | tee /tmp/ph
 - [ ] Remap 1280×720, yaw 0° / 180°, FOV ≈ 70°
 - [ ] Detector: `tagStandard41h12`, `decimate=1.0`, `refine_edges`, `nthreads` ≥ 2
 - [ ] Log có: `t_grab_ms`, `t_remap_ms`, `t_detect_ms`, `t_total_ms`, fps, ids (+ margin trong JSON/debug overlay)
+- [ ] File log timestamped dưới `logs/` (script in `log_file=...` lúc start)
 - [ ] Preview thấy equirect + viewport (trừ khi `--no-preview`)
 
 Lệnh chạy đã dùng:

@@ -50,14 +50,21 @@ ensure_loopback() {
 wait_theta_usb() {
   local vid="${THETA_USB_VID:-05ca}"
   local pid="${THETA_USB_PID_LIVE:-2717}"
-  echo "Waiting for Theta live USB ${vid}:${pid} ..."
-  for _ in $(seq 1 100); do
+  # Boot/udev thường start trước khi Theta kịp vào LIVE — chờ đủ dài.
+  local wait_sec="${THETA_USB_WAIT_SEC:-60}"
+  local nloops
+  nloops=$((wait_sec * 5))
+  echo "Waiting for Theta live USB ${vid}:${pid} (≤${wait_sec}s) ..."
+  local i
+  for i in $(seq 1 "${nloops}"); do
     if lsusb -d "${vid}:${pid}" >/dev/null 2>&1; then
       return 0
     fi
     sleep 0.2
   done
-  echo "WARN: chưa thấy USB ${vid}:${pid} — vẫn thử gst_loopback (camera phải ở LIVE)" >&2
+  echo "ERROR: chưa thấy USB ${vid}:${pid} sau ${wait_sec}s — không start gst_loopback" >&2
+  echo "       Bật LIVE trên Theta (lsusb phải ra ${vid}:${pid}), rồi: systemctl restart theta-loopback" >&2
+  exit 1
 }
 
 if [[ ! -x "${GST_LOOPBACK_BIN}" ]]; then

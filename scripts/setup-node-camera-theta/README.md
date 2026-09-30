@@ -66,15 +66,22 @@ udev + `theta-loopback.service` chỉ kích hoạt khi thấy `2717` — **khôn
 scripts/setup-node-camera-theta/
 ├── README.md
 ├── theta.conf                ← số video, USB ID, đường dẫn /opt/theta
-├── install.sh
+├── install.sh                ← cài đầy đủ (DKMS + build + units)
+├── install-units.sh          ← chỉ cập nhật script/systemd (watchdog)
 ├── apply-patches.sh
 ├── start-loopback.sh
+├── check-stream.sh           ← probe frame thật (không tin mỗi process alive)
+├── wait-stream-ready.sh      ← ExecStartPost: warmup + check-stream
+├── watchdog-loopback.sh      ← LIVE mà không có frame → restart service
 ├── status.sh
 ├── udev/99-theta-x.rules
-└── systemd/theta-loopback.service
+└── systemd/
+    ├── theta-loopback.service
+    ├── theta-loopback-watchdog.service
+    └── theta-loopback-watchdog.timer
 ```
 
-Sau `install.sh`, bản chạy ổn định nằm ở `/opt/theta/`.
+Sau `install.sh` / `install-units.sh`, bản chạy ổn định nằm ở `/opt/theta/`.
 
 ---
 
@@ -118,7 +125,16 @@ sudo ./install.sh
 4. Nạp module, kiểm tra `/dev/video${THETA_VIDEO_NR}` và nhãn `ThetaX`. Thiếu thì script dừng.
 5. Clone / build 2 repo Ricoh vào `/opt/theta`
 6. Patch: PID `0x2717`, `v4l2sink` → `/dev/video${THETA_VIDEO_NR}`, `THETA_DAEMON`
-7. Cài udev + enable `theta-loopback.service`
+7. Cài udev + enable `theta-loopback.service` + `theta-loopback-watchdog.timer`
+
+Chỉ cập nhật healthcheck/watchdog (máy đã cài trước đó):
+
+```bash
+cd scripts/setup-node-camera-theta
+sudo ./install-units.sh
+sudo systemctl restart theta-loopback   # nhận ExecStartPost mới
+./status.sh                             # phải thấy STREAM OK
+```
 
 Log đầy đủ: `/var/log/theta-setup.log`. Khi DKMS fail, script in thêm 80 dòng cuối `/var/lib/dkms/v4l2loopback/*/build/make.log`.
 
@@ -130,7 +146,8 @@ Kỳ vọng sau khi chạy: `dkms status` có `v4l2loopback/0.15.4` installed ch
 
 1. Bật **LIVE** trên Theta X.
 2. Cắm USB — udev start `theta-loopback`.
-3. App đọc **`/dev/video1`** (hoặc số trong `theta.conf`).
+3. Watchdog timer (~20s) tự restart nếu process sống nhưng **không đẩy frame**.
+4. App đọc **`/dev/video1`** (hoặc số trong `theta.conf`).
 
 ```bash
 sudo ./start-loopback.sh
@@ -138,12 +155,10 @@ sudo ./start-loopback.sh
 sudo systemctl start theta-loopback
 
 ./status.sh
+/opt/theta/bin/check-stream.sh    # bắt buộc: phải STREAM OK (không đủ systemctl active)
 lsusb -d 05ca:2717
-v4l2-ctl --list-devices
 v4l2-ctl -d /dev/video1 --list-formats-ext
-gst-launch-1.0 v4l2src device=/dev/video1 ! fakesink -v
-# hoặc xem hình:
-gst-launch-1.0 v4l2src device=/dev/video1 ! videoconvert ! autovideosink sync=false
+gst-launch-1.0 v4l2src device=/dev/video1 num-buffers=10 ! fakesink sync=false -v
 ```
 
 ---
@@ -170,6 +185,8 @@ gst-launch-1.0 v4l2src device=/dev/video1 ! videoconvert ! autovideosink sync=fa
 | Service thoát ngay | Thiếu `THETA_DAEMON`; `journalctl -u theta-loopback -e` |
 | Sai số video | `THETA_VIDEO_NR` ≠ node thật → sửa conf, patch lại, `modprobe` lại |
 | Không có format trên device | `gst_loopback` chưa chạy / chưa feed |
+| `systemctl active` nhưng OpenCV `select() timeout` | Process treo idle — `check-stream.sh` FAIL. Watchdog sẽ restart; hoặc `sudo systemctl restart theta-loopback` |
+| `STREAM FAIL` sau start | Xem `journalctl -u theta-loopback -e`; ExecStartPost fail → service restart |
 | `install.sh` dừng / DKMS fail | `/var/log/theta-setup.log` và đuôi `make.log` trong `/var/lib/dkms/v4l2loopback/` |
 | `apt` kéo lại `v4l2loopback-dkms` 0.12.7 | Gói đang `hold`. Đừng `apt-mark unhold` khi candidate vẫn là 0.12.7 |
 
