@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# watchdog-loopback.sh — khi Theta LIVE mà loopback không đẩy frame → restart service.
+# watchdog-loopback.sh — Theta LIVE mà gst_loopback gần như không tốn CPU → restart.
+# Không mở /dev/videoN (exclusive_caps: opener thứ hai làm hỏng client đang đọc).
 # Chạy bởi theta-loopback-watchdog.timer (oneshot định kỳ).
 set -euo pipefail
 
@@ -17,10 +18,11 @@ fi
 : "${THETA_USB_PID_LIVE:=2717}"
 : "${THETA_WATCHDOG_WARMUP_SEC:=12}"
 : "${THETA_WATCHDOG_COOLDOWN_SEC:=45}"
+: "${THETA_WATCHDOG_SAMPLE_SEC:=2}"
+: "${THETA_WATCHDOG_CPU_MIN:=8}"
 
 STATE_DIR="${THETA_WATCHDOG_STATE_DIR:-/run/theta}"
 STATE_FILE="${STATE_DIR}/last_restart"
-CHECK_BIN="${SCRIPT_DIR}/check-stream.sh"
 SERVICE="theta-loopback.service"
 
 mkdir -p "${STATE_DIR}"
@@ -47,6 +49,27 @@ mark_restart() {
   now_ts >"${STATE_FILE}"
 }
 
+# %CPU trong một cửa sổ ngắn. ps %cpu là trung bình từ lúc process start — không dùng được
+# để bắt stall sau một lúc chạy khỏe. Không mở /dev/videoN: exclusive_caps=1, opener thứ hai
+# làm check-stream fail và restart nhầm stream đang có client (bench).
+sample_cpu_percent() {
+  local pid="$1"
+  local hz t1 t2
+  hz="$(getconf CLK_TCK)"
+  if [[ ! -r "/proc/${pid}/stat" ]]; then
+    echo -1
+    return
+  fi
+  t1="$(awk '{print $14+$15}' "/proc/${pid}/stat")"
+  sleep "${THETA_WATCHDOG_SAMPLE_SEC}"
+  if [[ ! -r "/proc/${pid}/stat" ]]; then
+    echo -1
+    return
+  fi
+  t2="$(awk '{print $14+$15}' "/proc/${pid}/stat")"
+  echo $(( (t2 - t1) * 100 / hz / THETA_WATCHDOG_SAMPLE_SEC ))
+}
+
 if ! usb_live; then
   echo "watchdog: no LIVE USB ${THETA_USB_VID}:${THETA_USB_PID_LIVE} — skip"
   exit 0
@@ -65,16 +88,23 @@ if ((age < THETA_WATCHDOG_WARMUP_SEC)); then
   exit 0
 fi
 
-if "${CHECK_BIN}"; then
+pid="$(systemctl show -p MainPID --value "${SERVICE}")"
+cpu="$(sample_cpu_percent "${pid}")"
+if [[ "${cpu}" -lt 0 ]]; then
+  echo "watchdog: cannot sample MainPID=${pid} — skip"
+  exit 0
+fi
+if ((cpu >= THETA_WATCHDOG_CPU_MIN)); then
+  echo "watchdog: gst_loopback pid=${pid} cpu=${cpu}% ≥${THETA_WATCHDOG_CPU_MIN}% — alive"
   exit 0
 fi
 
 if ((age < THETA_WATCHDOG_COOLDOWN_SEC)); then
-  echo "watchdog: stream fail but cooldown ${age}s/${THETA_WATCHDOG_COOLDOWN_SEC}s — skip restart"
+  echo "watchdog: cpu=${cpu}% idle but cooldown ${age}s/${THETA_WATCHDOG_COOLDOWN_SEC}s — skip restart"
   exit 0
 fi
 
-echo "watchdog: stream stalled while LIVE — restarting ${SERVICE}"
+echo "watchdog: gst_loopback pid=${pid} cpu=${cpu}% <${THETA_WATCHDOG_CPU_MIN}% while LIVE — restarting ${SERVICE}"
 systemctl restart "${SERVICE}"
 mark_restart
 exit 0
